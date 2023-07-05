@@ -1,128 +1,143 @@
-function getUserIP(callback) {
-    // Use a third-party service to fetch the IP address
-    fetch('https://api.ipify.org?format=json')
-      .then(response => response.json())
-      .then(data => {
-        const ipAddress = data.ip;
-        callback(ipAddress);
+function getUserInfo() {
+    fetch("https://api.ipify.org/?format=json")
+      .then((res) => res.json())
+      .then((data) => {
+        let ipAddress = data.ip;
+  
+        // console.log(ipAddress)
+        fetch(`https://ipinfo.io/${ipAddress}?token=a65aa5704d8782`)
+          .then((response) => response.json())
+          .then((data) => {
+            const ip = data.ip;
+            const lat = data.loc.split(",")[0];
+            const lon = data.loc.split(",")[1];
+            const timezone = data.timezone;
+            const pincode = data.postal;
+  
+            showLocationOnMap(lat, lon, data);
+            showTimezone(timezone, pincode);
+            getPostOffices(pincode);
+  
+            // console.log(data);
+          })
+          .catch((error) => {
+            console.log("Error:", error);
+          });
       });
   }
   
-  // Call the function and store the IP address in a variable
-  let userIP;
-  getUserIP(ip => {
-    userIP = ip;
-  });
+  function showLocationOnMap(lat, lon, data) {
+    const mapDiv = document.getElementById("map");
+    // const mapUrl = `https://www.google.com/maps/embed/v1/view?key=a65aa5704d8782=${lat},${lon}&zoom=10`;
+    mapDiv.classList.add("map");
+    const mapUrl = `<iframe src="https://maps.google.com/maps?q=${lat}, ${lon}&z=15&output=embed" width="100%" height="100%"></iframe>`;
   
-
-
-//   document.getElementById('getDataButton').addEventListener('click', function() {
-//     // Fetch the data using the user's IP address
-//     fetch(`https://ipinfo.io/61.2.156.223/geo`)
-//       .then(response => response.json())
-//       .then(data => {
-//         // Extract the latitude and longitude from the response
-//         const { loc } = data;
-//         const [latitude, longitude] = loc.split(',');
+    const btn = document.querySelector(".btn");
+    btn.classList.add("removeBtn");
   
-//         // Update the iframe source with the user's location
-//         const iframe = document.createElement('iframe');
-//         iframe.src = `https://maps.google.com/maps?q=19.9476113,73.8301322&output=embed`;
-//         iframe.width = '100%';
-//         iframe.height = '450';
-//         document.body.appendChild(iframe);
+    const ipDetails = document.querySelector(".ipDetails");
+    // console.log(data)
+    ipDetails.innerHTML += `
+        <ul>
+          <li>Lat: ${lat}</li>
+          <li>long: ${lon}</li>
+        </ul>
+        <ul>
+          <li>City: ${data.city}</li>
+          <li>Region: ${data.region}</li>
+        </ul>
+        <ul>
+          <li>Organisation: ${data.org}</li>
+          <li>Hostname: ${data.timezone}</li>
+        </ul>
+      
+      `;
+    mapDiv.innerHTML = mapUrl;
+  }
   
-//         // Update the IP address heading with the user's IP address
-//         const ipAddressHeading = document.getElementById('ipAddressHeading');
-//         ipAddressHeading.innerHTML += ` 61.2.156.223`;
-//       });
-//   });
-
-
-
-document.getElementById('getDataButton').addEventListener('click', function() {
-    // Fetch the data using the user's IP address
-    fetch(`https://ipinfo.io/61.2.156.223/geo`)
-      .then(response => response.json())
-      .then(data => {
-        // Extract the latitude and longitude from the response
-        const { loc } = data;
-        const [latitude, longitude] = loc.split(',');
+  function showTimezone(timezone, pincode) {
+    // for count of pincodes found
+    var pincodeCount = 0;
+    fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+      .then((response) => response.json())
+      .then((data) => {
+        const postOffices = data[0].PostOffice;
+        postOffices.forEach((element) => {
+          pincodeCount++;
+        });
   
-        // Construct the Google Maps HTML code
-        const googleMapsHTML = `
-          <html>
-            <body>
-              <iframe width="100%" height="450" frameborder="0" style="border:0" 
-                src="https://maps.google.com/maps?q=19.9476113,73.8301322&output=embed" 
-                width="360" height="270" frameborder="0" style="border:0">
-              </iframe>
-            </body>
-          </html>
-        `;
+        console.log(pincodeCount);
   
-        // Update the iframe source with the Google Maps HTML
-        const iframe = document.createElement('iframe');
-        iframe.srcdoc = googleMapsHTML;
-        iframe.width = '100%';
-        iframe.height = '450';
-        document.body.appendChild(iframe);
+        //   console.log(timezone);
+        const timezoneElement = document.getElementById("timezone");
+        let currentTime = new Date().toLocaleString("en-US", {
+          timeZone: timezone,
+        });
   
-        // Update the IP address heading with the user's IP address
-        const ipAddressHeading = document.getElementById('ipAddressHeading');
-        ipAddressHeading.innerHTML += ` 61.2.156.223`;
+        //   console.log(currentTime);
+  
+        timezoneElement.innerHTML += `
+        <h3>Time Zone: ${timezone}</h3>
+        <h3>Date And Time: ${currentTime}</h3>
+        <h3>Pincode: ${pincode}</h3>
+        <h3>Message: Number of pincode(s) found: ${pincodeCount}</h3>
+      `;
       });
-  });
+  }
   
+  function getPostOffices(pincode) {
+    fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+      .then((response) => response.json())
+      .then((data) => {
+        const postOffices = data[0].PostOffice;
+        //   console.log(postOffices);
   
-
-
-
-
-
-
-
-
-
-  const { timezone } = data;
-
-// Get the current time in the user's timezone
-const currentTime = new Date().toLocaleString('en-US', { timeZone: timezone });
-console.log('Current time:', currentTime);
-
-// Assuming you have the pincode available in a variable called 'pincode'
-fetch(`https://api.postalpincode.in/pincode/422207`)
-  .then(response => response.json())
-  .then(data => {
-    // Extract the list of post offices from the response
-    const postOffices = data[0].PostOffice;
-    console.log('Post offices:', postOffices);
-  });
-
-
-
-
-  const postOfficesList = document.getElementById('postOfficesList');
-const searchBox = document.getElementById('searchBox');
-
-// Display all post offices initially
-displayPostOffices(postOffices);
-
-// Filter post offices based on search input
-searchBox.addEventListener('input', function() {
-  const searchTerm = this.value.toLowerCase();
-  const filteredPostOffices = postOffices.filter(postOffice =>
-    postOffice.Name.toLowerCase().includes(searchTerm) ||
-    postOffice.BranchType.toLowerCase().includes(searchTerm)
-  );
-  displayPostOffices(filteredPostOffices);
-});
-
-function displayPostOffices(postOffices) {
-  postOfficesList.innerHTML = '';
-  postOffices.forEach(postOffice => {
-    const listItem = document.createElement('li');
-    listItem.textContent = `${postOffice.Name} (${postOffice.BranchType})`;
-    postOfficesList.appendChild(listItem);
-  });
-}
+        const postOfficeList = document.getElementById("postOfficeList");
+        postOffices.forEach((postOffice) => {
+          postOfficeList.innerHTML += `
+          <ul>
+              <li>Name: ${postOffice.Name}</li>
+              <li>Branch Type: ${postOffice.BranchType}</li>
+              <li>Delivery Status: ${postOffice.DeliveryStatus}</li>
+              <li>District: ${postOffice.District}</li>
+              <li>Division: ${postOffice.Division}</li>
+          </ul>
+          `;
+        });
+  
+        const searchBar = document.getElementById("searchBoxed");
+        searchBar.innerHTML += `
+              <input
+              type="text"
+              id="searchBox"
+              placeholder="Filter"
+              oninput="filterPostOffices()"
+              />
+          `;
+      })
+      .catch((error) => {
+        console.log("Error:", error);
+      });
+  }
+  
+  function filterPostOffices() {
+    const searchBox = document.getElementById("searchBox");
+  
+    const filter = searchBox.value.toUpperCase();
+    // console.log(filter)
+    const postOfficeList = document.getElementById("postOfficeList");
+  
+    // const listItems = postOfficeList.getElementsByTagName("li");
+    const listItems = postOfficeList.getElementsByTagName("ul");
+  
+    for (let i = 0; i < listItems.length; i++) {
+      const listItem = listItems[i];
+      console.log(listItem);
+      const text = listItem.textContent || listItem.innerText;
+      if (text.toUpperCase().indexOf(filter) > -1) {
+        listItem.style.display = "";
+      } else {
+        listItem.style.display = "none";
+      }
+    }
+  }
